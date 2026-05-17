@@ -1,0 +1,86 @@
+name: Validate
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      - name: Install kubeconform
+        run: |
+          curl -sSL -o kubeconform.tar.gz https://github.com/yannh/kubeconform/releases/download/v0.6.7/kubeconform-linux-amd64.tar.gz
+          tar -xzf kubeconform.tar.gz
+          sudo mv kubeconform /usr/local/bin/kubeconform
+
+      - name: Validate repository structure
+        run: |
+          test -d helm/grafana
+          test -d helm/prometheus
+          test -d helm/sentry
+          test -d k8s/namespaces
+          test -d k8s/ingress
+          test -d k8s/secrets
+          test -d k8s/configs
+          test -d docs
+          test -d scripts
+
+      - name: Validate YAML syntax
+        run: |
+          python -m pip install --user pyyaml
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          for path in Path(".").rglob("*.yaml"):
+              with path.open("r", encoding="utf-8") as handle:
+                  list(yaml.safe_load_all(handle))
+              print(path)
+          PY
+
+      - name: Add Helm repositories
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add grafana https://grafana.github.io/helm-charts
+          helm repo add sentry https://sentry-kubernetes.github.io/charts
+          helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo update
+
+      - name: Helm lint
+        run: |
+          mkdir -p .charts
+          helm pull prometheus-community/kube-prometheus-stack --untar --untardir .charts
+          helm pull grafana/grafana --untar --untardir .charts
+          helm pull sentry/sentry --untar --untardir .charts
+          helm pull grafana/loki --untar --untardir .charts
+          helm pull grafana/tempo --untar --untardir .charts
+          helm pull open-telemetry/opentelemetry-collector --untar --untardir .charts
+          helm lint .charts/kube-prometheus-stack --values helm/prometheus/values.yaml
+          helm lint .charts/grafana --values helm/grafana/values.yaml
+          helm lint .charts/sentry --values helm/sentry/values.yaml
+          helm lint .charts/loki --values helm/loki/values.yaml
+          helm lint .charts/tempo --values helm/tempo/values.yaml
+          helm lint .charts/opentelemetry-collector --values helm/opentelemetry-collector/values.yaml
+
+      - name: Render Helm charts
+        run: |
+          helm template prometheus .charts/kube-prometheus-stack --namespace monitoring --values helm/prometheus/values.yaml >/tmp/prometheus.yaml
+          helm template grafana .charts/grafana --namespace monitoring --values helm/grafana/values.yaml >/tmp/grafana.yaml
+          helm template sentry .charts/sentry --namespace sentry --values helm/sentry/values.yaml >/tmp/sentry.yaml
+          helm template loki .charts/loki --namespace monitoring --values helm/loki/values.yaml --set enabled=true >/tmp/loki.yaml
+          helm template tempo .charts/tempo --namespace monitoring --values helm/tempo/values.yaml --set enabled=true >/tmp/tempo.yaml
+          helm template opentelemetry-collector .charts/opentelemetry-collector --namespace monitoring --values helm/opentelemetry-collector/values.yaml --set enabled=true >/tmp/opentelemetry-collector.yaml
+
+      - name: Validate Kubernetes manifests
+        run: |
+          kubeconform -strict -ignore-missing-schemas -summary k8s/namespaces/*.yaml k8s/secrets/*.example.yaml k8s/ingress/*.yaml
+          kubeconform -strict -ignore-missing-schemas -summary k8s/configs/*.yaml

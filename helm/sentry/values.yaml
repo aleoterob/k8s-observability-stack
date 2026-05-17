@@ -1,0 +1,214 @@
+profiles:
+  - errors-only
+
+fullnameOverride: sentry
+
+user:
+  create: true
+  email: admin@example.local
+  existingSecret: sentry-secret
+  existingSecretKey: admin-password
+
+system:
+  url: http://sentry.local
+
+sentry:
+  existingSecret: sentry-secret
+  existingSecretKey: key
+  features:
+    enableFeedback: false
+    enableProfiling: false
+    enableSessionReplay: false
+    enableSpan: false
+    enableUptime: false
+  taskBroker:
+    brokers:
+      - name: default
+        topic: taskworker
+        consumerGroup: taskworker
+        replicas: 1
+      - name: ingest
+        topic: taskworker-ingest
+        consumerGroup: taskworker-ingest
+        replicas: 1
+  taskWorker:
+    workers:
+      - name: default
+        brokerName: default
+        brokerReplicas: 1
+        concurrency: 1
+        replicas: 1
+      - name: ingest
+        brokerName: ingest
+        brokerReplicas: 1
+        concurrency: 1
+        replicas: 1
+  ingestConsumerAttachments:
+    enabled: false
+  ingestConsumerTransactions:
+    enabled: false
+  ingestReplayRecordings:
+    enabled: false
+  ingestOccurrences:
+    enabled: false
+  ingestFeedback:
+    enabled: false
+  ingestMonitors:
+    enabled: false
+  monitorsClockTasks:
+    enabled: false
+  monitorsClockTick:
+    enabled: false
+  billingMetricsConsumer:
+    enabled: false
+  genericMetricsConsumer:
+    enabled: false
+  metricsConsumer:
+    enabled: false
+  subscriptionConsumerResultsEapItems:
+    enabled: false
+  subscriptionConsumerTransactions:
+    enabled: false
+  uptimeResults:
+    enabled: false
+  postProcessForwardTransactions:
+    enabled: false
+  postProcessForwardIssuePlatform:
+    enabled: false
+  processSegments:
+    enabled: false
+  processSpans:
+    enabled: false
+  subscriptionConsumerGenericMetrics:
+    enabled: false
+  subscriptionConsumerMetrics:
+    enabled: false
+
+service:
+  type: NodePort
+
+ingress:
+  enabled: false
+
+persistence:
+  enabled: true
+  persistentWorkers: true
+  accessMode: ReadWriteOnce
+  size: 8Gi
+
+postgresql:
+  enabled: true
+  auth:
+    existingSecret: sentry-secret
+    secretKeys:
+      adminPasswordKey: postgresql-password
+      userPasswordKey: postgresql-password
+  primary:
+    persistence:
+      enabled: true
+      size: 8Gi
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 512Mi
+
+redis:
+  enabled: true
+  architecture: standalone
+  master:
+    persistence:
+      enabled: true
+      size: 4Gi
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+  replica:
+    replicaCount: 0
+
+kafka:
+  provisioning:
+    replicationFactor: 1
+  controller:
+    replicaCount: 1
+    resources:
+      requests:
+        cpu: 100m
+        memory: 512Mi
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+
+snuba:
+  eapItemsConsumer:
+    enabled: false
+  outcomesBillingConsumer:
+    enabled: false
+  metricsConsumer:
+    enabled: false
+  subscriptionConsumerEapItems:
+    enabled: false
+  subscriptionConsumerTransactions:
+    enabled: false
+  subscriptionConsumerGenericMetricsDistributions:
+    enabled: false
+  subscriptionConsumerGenericMetricsSets:
+    enabled: false
+  subscriptionConsumerGenericMetricsCounters:
+    enabled: false
+  subscriptionConsumerGenericMetricsGauges:
+    enabled: false
+  genericMetricsGaugesConsumer:
+    enabled: false
+  genericMetricsCountersConsumer:
+    enabled: false
+  genericMetricsDistributionConsumer:
+    enabled: false
+  genericMetricsSetsConsumer:
+    enabled: false
+  subscriptionConsumerMetrics:
+    enabled: false
+  replaysConsumer:
+    enabled: false
+  transactionsConsumer:
+    enabled: false
+  issueOccurrenceConsumer:
+    enabled: false
+  groupAttributesConsumer:
+    enabled: false
+
+web:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 768Mi
+    limits:
+      cpu: 1000m
+      memory: 1536Mi
+
+worker:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 250m
+      memory: 768Mi
+    limits:
+      cpu: 1000m
+      memory: 1536Mi
+
+cron:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 768Mi

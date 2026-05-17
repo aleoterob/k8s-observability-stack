@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: example-metrics-app
+  namespace: observability-demo
+  labels:
+    app.kubernetes.io/name: example-metrics-app
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: example-metrics-app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: example-metrics-app
+    spec:
+      containers:
+        - name: app
+          image: prom/prometheus-example-app:v0.5.0
+          ports:
+            - name: web
+              containerPort: 8080
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          readinessProbe:
+            httpGet:
+              path: /metrics
+              port: web
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /metrics
+              port: web
+            initialDelaySeconds: 15
+            periodSeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: example-metrics-app
+  namespace: observability-demo
+  labels:
+    app.kubernetes.io/name: example-metrics-app
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: example-metrics-app
+  ports:
+    - name: web
+      port: 8080
+      targetPort: web
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: example-metrics-app
+  namespace: monitoring
+  labels:
+    release: prometheus
+spec:
+  namespaceSelector:
+    matchNames:
+      - observability-demo
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: example-metrics-app
+  endpoints:
+    - port: web
+      path: /metrics
+      interval: 30s
