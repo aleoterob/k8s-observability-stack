@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: example-metrics-app
-  namespace: observability-demo
+  namespace: monitoring-demo
   labels:
     app.kubernetes.io/name: example-metrics-app
 spec:
@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: app
-          image: prom/prometheus-example-app:v0.5.0
+          image: quay.io/brancz/prometheus-example-app:v0.5.0
           ports:
             - name: web
               containerPort: 8080
@@ -45,7 +45,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: example-metrics-app
-  namespace: observability-demo
+  namespace: monitoring-demo
   labels:
     app.kubernetes.io/name: example-metrics-app
 spec:
@@ -67,7 +67,7 @@ metadata:
 spec:
   namespaceSelector:
     matchNames:
-      - observability-demo
+      - monitoring-demo
   selector:
     matchLabels:
       app.kubernetes.io/name: example-metrics-app

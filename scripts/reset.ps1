@@ -13,6 +13,5 @@ Require-Command kubectl
 kubectl delete -f (Join-Path $RootDir "k8s/namespaces") --ignore-not-found=true
 
 Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $RootDir "k8s/secrets/grafana-admin-secret.yaml")
-Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $RootDir "k8s/secrets/sentry-secret.yaml")
 
 Write-Host "Stack reset completed."

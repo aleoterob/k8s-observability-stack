@@ -6,7 +6,7 @@ if ($PSVersionTable.PSVersion.Major -ge 7) {
 $RootDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 . (Join-Path $RootDir "scripts/shared.ps1")
 
-$ClusterName = if ($env:KIND_CLUSTER_NAME) { $env:KIND_CLUSTER_NAME } else { "observability" }
+$ClusterName = if ($env:KIND_CLUSTER_NAME) { $env:KIND_CLUSTER_NAME } else { "prometheus-grafana" }
 
 Require-Command kind
 Require-Command kubectl

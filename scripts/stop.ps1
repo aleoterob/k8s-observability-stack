@@ -12,7 +12,6 @@ Require-Command kubectl
 helm uninstall opentelemetry-collector -n monitoring --ignore-not-found
 helm uninstall tempo -n monitoring --ignore-not-found
 helm uninstall loki -n monitoring --ignore-not-found
-helm uninstall sentry -n sentry --ignore-not-found
 helm uninstall grafana -n monitoring --ignore-not-found
 helm uninstall prometheus -n monitoring --ignore-not-found
 

@@ -26,7 +26,6 @@ jobs:
         run: |
           test -d helm/grafana
           test -d helm/prometheus
-          test -d helm/sentry
           test -d k8s/namespaces
           test -d k8s/ingress
           test -d k8s/secrets
@@ -51,7 +50,6 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo add sentry https://sentry-kubernetes.github.io/charts
           helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
           helm repo update
 
@@ -60,13 +58,11 @@ jobs:
           mkdir -p .charts
           helm pull prometheus-community/kube-prometheus-stack --untar --untardir .charts
           helm pull grafana/grafana --untar --untardir .charts
-          helm pull sentry/sentry --untar --untardir .charts
           helm pull grafana/loki --untar --untardir .charts
           helm pull grafana/tempo --untar --untardir .charts
           helm pull open-telemetry/opentelemetry-collector --untar --untardir .charts
           helm lint .charts/kube-prometheus-stack --values helm/prometheus/values.yaml
           helm lint .charts/grafana --values helm/grafana/values.yaml
-          helm lint .charts/sentry --values helm/sentry/values.yaml
           helm lint .charts/loki --values helm/loki/values.yaml
           helm lint .charts/tempo --values helm/tempo/values.yaml
           helm lint .charts/opentelemetry-collector --values helm/opentelemetry-collector/values.yaml
@@ -75,7 +71,6 @@ jobs:
         run: |
           helm template prometheus .charts/kube-prometheus-stack --namespace monitoring --values helm/prometheus/values.yaml >/tmp/prometheus.yaml
           helm template grafana .charts/grafana --namespace monitoring --values helm/grafana/values.yaml >/tmp/grafana.yaml
-          helm template sentry .charts/sentry --namespace sentry --values helm/sentry/values.yaml >/tmp/sentry.yaml
           helm template loki .charts/loki --namespace monitoring --values helm/loki/values.yaml --set enabled=true >/tmp/loki.yaml
           helm template tempo .charts/tempo --namespace monitoring --values helm/tempo/values.yaml --set enabled=true >/tmp/tempo.yaml
           helm template opentelemetry-collector .charts/opentelemetry-collector --namespace monitoring --values helm/opentelemetry-collector/values.yaml --set enabled=true >/tmp/opentelemetry-collector.yaml
